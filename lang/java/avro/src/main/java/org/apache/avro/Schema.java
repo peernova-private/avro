@@ -17,11 +17,13 @@
  */
 package org.apache.avro;
 
-import java.io.File;
+import java.io.Serializable;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringReader;
+import java.io.File;
 import java.io.StringWriter;
+import java.io.StringReader;
+
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -78,7 +80,27 @@ import org.codehaus.jackson.node.DoubleNode;
  * existing property.
  * </ul>
  */
-public abstract class Schema extends JsonProperties {
+public abstract class Schema extends JsonProperties implements Serializable {
+
+  private static final long serialVersionUID = 1L;
+
+  protected Object writeReplace() {
+    SerializableSchema ss = new SerializableSchema();
+    ss.schemaString = toString();
+    return ss;
+  }
+
+  private static final class SerializableSchema implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String schemaString;
+
+    private Object readResolve() {
+      return new Schema.Parser().parse(schemaString);
+    }
+  }
+
   static final JsonFactory FACTORY = new JsonFactory();
   static final ObjectMapper MAPPER = new ObjectMapper(FACTORY);
 
